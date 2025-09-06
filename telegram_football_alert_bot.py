@@ -55,7 +55,7 @@ async def analyze_matches(app: Application):
     for match in matches:
         teams = match["teams"]
         stats = match.get("statistics", [])
-        
+
         # NB: Alcune API hanno stats separate per team → qui simuliamo estrazione
         fake_stats = {
             "xG_home": 1.2,
@@ -92,8 +92,11 @@ def main():
     app = Application.builder().token(TELEGRAM_BOT_TOKEN).build()
     app.add_handler(CommandHandler("start", start))
 
-    # Avvia il task in background
-    app.job_queue.run_once(lambda ctx: asyncio.create_task(background_task(app)), when=1)
+    # Avvia il task in background correttamente
+    async def on_startup(app):
+        asyncio.create_task(background_task(app))
+
+    app.post_init = on_startup
 
     app.run_polling()
 
